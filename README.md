@@ -76,3 +76,113 @@ invia_oggetto(Oggetto, Buyer) :- write('Ho questo prodotto: '), write(Oggetto), 
 	messageA(mercato, send_message(match(Buyer,Me),Me)),
 	messageA(Buyer, send_message(ricevi_oggetto(Oggetto),Me)).
 ```
+The seller who offers a product will take into consideration the Buyer and his money. Recursively, the seller will pick and then send one by one the items he can sell to that buyer. If the seller does not have any product to sell, he does nothing. When he has sent all the possible products, the seller sends a _check_spesa_ message to the buyer. 
+
+Buyer code:
+
+```
+ricevi_oggettoE(Oggetto):> spesa(ListaSpesa), append(ListaSpesa, [Oggetto], ListaCorrente),
+			retractall(spesa(_)), assert(spesa(ListaCorrente)).
+check_spesaE :> stampa_spesa, assert(check_spesa(complete)).
+
+scegli_prodotto:- spesa(ListaSpesa) ,nonempty(ListaSpesa), check_spesa(complete).
+scegli_prodottoI:> write('Scelgo un prodotto tra quelli disponibili....'),nl,
+		spesa(ListaSpesa),
+		acquisti(ListaAcquisti),
+    		random_member(Oggetto, ListaSpesa),
+	    	write('Voglio acquistare questo oggetto: '), write(Oggetto), nl,
+		append(ListaAcquisti, [Oggetto], ListaAcquistiNew),
+		retractall(acquisti(_)),
+		assert(acquisti(ListaAcquistiNew)),
+		delete(ListaSpesa, Oggetto, NuovaListaSpesa),
+		retractall(spesa(ListaSpesa)),
+	    	assert(spesa(NuovaListaSpesa)),
+		acquistaProdottoA(Oggetto).
+```
+
+The buyer receives all the products sent by the seller but proceeds with the choice of the object just after the check_spesa event triggered. After choosing the object, he then pays the seller and adds it to his shopping list. 
+
+### acquista prodotto
+Buyer code: 
+
+```
+acquistaProdottoA([Nome,Costo]) :>
+	spesa(ListaSpesa),
+    	saldo_agente(Saldo),
+    	Costo =< Saldo, 
+    	NuovoSaldo is Saldo - Costo,
+	retract(saldo_agente(Saldo)),
+    	asserta(saldo_agente(NuovoSaldo)),
+	write('Mi restano '),
+	saldo_agente(X),
+	write(X), write(' euro.'),nl,	
+	messageA(mercato, send_message(acquisto_effettuato([Nome,Costo],Me),Me)),
+	check_acquisti.
+```
+
+Market code:
+```
+acquisto_effettuatoE([Nome,Costo], Buyer):> check_match([Nome,Costo],Buyer).
+
+check_match([Nome,Costo],Buyer):- matching(Buyer,Seller), write('Acquisto effettuato correttamente: '), write(Nome), write(' da '),write(Buyer), nl, 
+								messageA(Seller, send_message(acquisto_done([Nome,Costo]),Me)).
+check_match([Nome,Costo],Buyer):- \+matching(Buyer,Seller), write('I due agenti non stavano trattando!'),nl.
+
+```
+
+Seller code:  
+```
+acquisto_doneE([Nome,Costo]):> lista_oggetti(Lista),
+    	delete(Lista, [Nome, Costo], NuovaLista),
+    	retractall(lista_oggetti(_)),
+    	assert(lista_oggetti(NuovaLista)),
+ 	write('Oggetto venduto: '), write([Nome, Costo]), nl,
+	incassa(Costo).
+```
+The buyer purchases the object considering its cost _Costo_ and subtracts that amount from its money _Saldo_. In the end the amount of money of the buyer is equal to _Saldo - Costo = NuovoSaldo_. The market is notified of the action and check that everything is correct while the seller gains the cost of the sold product. Moreover, check_acquisti is used to check if the Buyer can still buy other products from the same seller.
+
+# Execution example
+**In this example, the input is entered in the following way:**
+![sicstus input](https://github.com/EnricoAdamelli/DALI-mercato/assets/64257821/60593d09-4942-42af-93eb-244473514f7e)
+
+
+$${\color{blue}Seller1 \space (and \space seller2) \space are \space started:}$$
+
+![seller1Part1](https://github.com/EnricoAdamelli/DALI-mercato/assets/64257821/f2f8e273-f38c-4479-b983-2af225e9bd99)
+
+$${\color{blue}The \space market \space assert \space them \space as \space sellers: }$$
+
+![market_pt1](https://github.com/EnricoAdamelli/DALI-mercato/assets/64257821/2dbc4563-8157-40c7-b809-b1a3055b46b3)
+
+$${\color{blue}buyer1 \space enters \space and \space is \space asserted \space as \space a \space buyer; \space Then \space it \space starts \space the \space trading:}$$
+
+![buyer1](https://github.com/EnricoAdamelli/DALI-mercato/assets/64257821/2adb627c-9089-43d7-891e-fce81ac5836f)
+
+$${\color{blue}Market \space output:}$$
+
+![mercato_pt2](https://github.com/EnricoAdamelli/DALI-mercato/assets/64257821/398c023c-18bc-42ab-95a4-8a4ef2eaf4ec)
+
+$${\color{blue}Seller1 \space output:}$$
+
+![seller1](https://github.com/EnricoAdamelli/DALI-mercato/assets/64257821/b9cc6c27-a705-4e29-b0a7-bcbc86461973)
+
+$${\color{blue}Seller2 \space output:}$$
+
+![seller2](https://github.com/EnricoAdamelli/DALI-mercato/assets/64257821/af346bdd-2932-434a-b0b8-aedda41e1639)
+
+$${\color{red}Buyer1 \space enters \space but \space his \space age \space is \space 15!}$$
+
+![buyer2](https://github.com/EnricoAdamelli/DALI-mercato/assets/64257821/b8bdfca3-abc4-486e-82a2-1828a363d918)
+
+$${\color{blue}Market \space output \space (final) :}$$
+
+![mercato](https://github.com/EnricoAdamelli/DALI-mercato/assets/64257821/3f99501b-b509-49ea-b09c-79e9dec96ab4)
+
+# Installation instructions
+This project has been implemented in a Windows System, so it is necessary WSL.
+To run this project you need the following:
+- Sicstus installation (at least v4.6.0) : https://sicstus.sics.se/download4.html
+- DALI installation by following this link: https://github.com/AAAI-DISIM-UnivAQ/DALI
+- clone this repository on your working directory
+- start the program startmas
+- in the active user window, write the commands as done in the above example.
