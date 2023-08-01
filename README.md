@@ -6,7 +6,7 @@ Moreover:
 1) Every buyer has the following traits: name, age,  expendable amount of money. 
 2) Every seller has the following traits: name, products to sell, total gain.
 3) The market acts like a broker which notifies the sellers when a buyer is available to buy something and then allows every seller to communicate with each buyer.
-# Class Diagram 
+# Object Diagram 
 ![Class Diagram](https://github.com/EnricoAdamelli/DALI-mercato/assets/64257821/fde5736e-d8d8-4b86-9cce-9c0e8588bd59)
 
 <li> Buyer: For instance we have here 2 buyers, buyer1 and buyer2. Each buyer has different age, name and available money. In particular, buyer2 has age 15, therefore he won't be able to buy anything in the market. Each buyer, for instance buyer1, can communicate with a seller when the buyer chooses to buy a product of that particular seller and pays him. </li>
