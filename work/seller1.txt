@@ -1,0 +1,54 @@
+:- dynamic lista_oggetti/1.
+:- dynamic guadagno/1.
+
+nome_agente(luca).
+lista_oggetti([[tv,120],[pc,300],[telefono,50]]).
+
+guadagno(0). 
+
+startE :> messageA(mercato, send_message(entra(Me, seller), Me)), 
+	presentazioneA.
+	
+buyer_disponibileE(Buyer, Saldo):> write(Buyer), write(' vuoi comprare qualcosa? Hai saldo '), write(Saldo),nl,offri_prodotto(Buyer, Saldo). 
+
+presentazioneA:> presentatiA, add_pastA(presentazione,3600).
+
+presentatiA:- write(' Buonasera, mi presento, mi chiamo '), nome(X), write(X).
+
+offri_prodotto(Buyer, Saldo):> format('Offro prodotti a ~w che costano al massimo ~w euro... ~n ', [Buyer, Saldo]),
+							 invia_tutti_gli_oggetti(Buyer, Saldo).
+	
+invia_oggetto(Oggetto, Buyer) :- write('Ho questo prodotto: '), write(Oggetto), nl,
+	messageA(mercato, send_message(match(Buyer,Me),Me)),
+	messageA(Buyer, send_message(ricevi_oggetto(Oggetto),Me)).
+
+invia_lista_oggetti([], Buyer, Saldo):- write('fine lista prodotti'),nl ,messageA(Buyer, send_message(check_spesa,Me)).
+invia_lista_oggetti([[Nome, Valore]|AltriOggetti], Buyer, Saldo) :-
+	(\+dif(Nome, null), \+dif(Valore, null)-> write('Non posso venderti nulla, mi spiace!');
+	Valore > Saldo -> write('Purtroppo non hai abbastanza soldi per questo prodotto!'),nl, invia_lista_oggetti(AltriOggetti, Buyer, Saldo);
+	Valore =< Saldo -> invia_oggetto([Nome, Valore], Buyer),
+    invia_lista_oggetti(AltriOggetti, Buyer, Saldo)).
+	
+invia_tutti_gli_oggetti(Buyer, Saldo) :-
+    lista_oggetti(Lista),
+    invia_lista_oggetti(Lista, Buyer, Saldo).
+
+acquisto_doneE([Nome,Costo]):> lista_oggetti(Lista),
+    delete(Lista, [Nome, Costo], NuovaLista),
+    retractall(lista_oggetti(_)),
+    assert(lista_oggetti(NuovaLista)),
+    write('Oggetto venduto: '), write([Nome, Costo]), nl,
+	incassa(Costo).
+
+stampa_prodotti :-
+	lista_oggetti(X),
+    write('Lista di prodotti rimanenti: '), nl,
+	(foreach(Prodotto, X) do write(Prodotto),nl).
+	
+incassa(Costo) :- guadagno(X), 
+    GuadagnoCorrente is X + Costo,
+    retract(guadagno(X)),
+    asserta(guadagno(GuadagnoCorrente)),
+	format('Grazie!! ~n Ho guadagnato ~w euro e ora ne ho ~w in totale.~n',[Costo,GuadagnoCorrente]).
+
+nome(X) :- nome_agente(X).

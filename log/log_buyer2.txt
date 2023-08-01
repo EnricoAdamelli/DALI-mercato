@@ -1,0 +1,4 @@
+send_message(send_message(entra(_49065,buyer),_49065))
+make(add_past(presentazione,3600))
+send_message(send_message(trading(_49829,300,15),_49829))
+send_message(send_message(esce(_48953,buyer),_48953))

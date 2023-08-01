@@ -1,0 +1,32 @@
+:- dynamic type/2.
+:- dynamic seller/1.
+:- dynamic add_seller/1.
+:- dynamic matching/2.
+
+entraE(Agent, Type) :> assert(type(Agent,Type)), write(' Entra '), write(Agent), write(' ('), write(Type), write(') '), nl,
+					(Type = seller->add_sellerA(Agent)).
+					
+esceE(Agent, Type) :> format('Il ~w ~w ha deciso di andare via.~n',[Type,Agent]).
+tradingE(Buyer, Saldo, Eta) :- Eta < 18, write(Buyer),write(' sei minorenne!!!'), messageA(Buyer,send_message(esci,Me)),retractall(type(Buyer,buyer)), nl.
+tradingE(Buyer, Saldo, Eta) :- Eta >= 18, write(Buyer),write(' vorrebbe acquistare qualcosa!!!'),nl,avvisa_sellerA(Buyer, Saldo).
+avvisa_sellerA(Buyer,Saldo) :> findall(Agent, (seller(Agent),\+matching(Buyer,Agent)), Sellers), send_message_to_sellersA(Sellers, Buyer, Saldo).
+
+send_message_to_sellersA([],_,_):> write('Non ci sono altri venditori'), type(Buyer,buyer), messageA(Buyer,send_message(esci,Me)).
+send_message_to_sellersA([Agent|Rest], Buyer, Saldo) :-
+	format('From Buyer Agent: ~w~n', Buyer), 
+	format('Sending message to Seller Agent: ~w~n', Agent),
+	messageA(Agent, send_message(buyer_disponibile(Buyer, Saldo),Me)).
+
+nonempty(Lista) :-
+    Lista = [_|_].
+
+add_sellerA(Agent) :> assert(seller(Agent)), write(Agent),write(', un venditore!'), nl.
+
+acquisto_effettuatoE([Nome,Costo], Buyer):> check_match([Nome,Costo],Buyer).
+
+check_match([Nome,Costo],Buyer):- matching(Buyer,Seller), write('Acquisto effettuato correttamente: '), write(Nome), write(' da '),write(Buyer), nl, 
+								messageA(Seller, send_message(acquisto_done([Nome,Costo]),Me)).
+check_match([Nome,Costo],Buyer):- \+matching(Buyer,Seller), write('I due agenti non stavano trattando!'),nl.
+
+matchE(Buyer,Seller) :> format('Il venditore ~w sta trattando con il cliente ~w . ~n ', [Seller, Buyer]),
+asserta(matching(Buyer,Seller)).

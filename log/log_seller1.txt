@@ -1,0 +1,6 @@
+send_message(send_message(entra(_29583,seller),_29583))
+make(add_past(presentazione,3600))
+send_message(send_message(match(buyer1,_45477),_45477))
+send_message(send_message(ricevi_oggetto([tv,120]),_50697))
+send_message(send_message(ricevi_oggetto([telefono,50]),_50661))
+send_message(send_message(check_spesa,_50625))
